@@ -1,0 +1,94 @@
+version: 2
+
+models:
+  - name: int_property_transactions
+    description: >
+      Intermediate property transaction model containing cleaned,
+      standardised, and business-enriched HM Land Registry transactions.
+
+    columns:
+
+      - name: transaction_id
+        description: >
+          Unique reference number for the property transaction.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: price
+        description: >
+          Sale price of the property transaction.
+        data_tests:
+          - not_null
+
+      - name: date_of_transfer
+        description: >
+          Date on which the property transaction was completed.
+        data_tests:
+          - not_null
+
+      - name: transaction_year
+        description: >
+          Calendar year in which the property transaction occurred.
+        data_tests:
+          - not_null
+
+      - name: transaction_month
+        description: >
+          Calendar month number in which the property transaction occurred.
+        data_tests:
+          - not_null
+
+      - name: transaction_month_start
+        description: >
+          First day of the month in which the transaction occurred.
+        data_tests:
+          - not_null
+
+      - name: property_type
+        description: >
+          Original HM Land Registry property type code.
+
+      - name: property_type_description
+        description: >
+          Human-readable description of the property type.
+
+      - name: property_age_category
+        description: >
+          Indicates whether the property was newly built or established.
+
+      - name: tenure_description
+        description: >
+          Human-readable description of the property tenure.
+
+      - name: postcode
+        description: >
+          Postcode associated with the property transaction.
+
+      - name: town_city
+        description: >
+          Town or city associated with the property.
+
+      - name: district
+        description: >
+          Administrative district associated with the property.
+
+      - name: county
+        description: >
+          County associated with the property.
+
+      - name: ppd_category_type
+        description: >
+          HM Land Registry Price Paid Data category.
+
+      - name: record_status
+        description: >
+          Status of the source record.
+
+      - name: _source_file
+        description: >
+          S3 object path of the source file.
+
+      - name: _loaded_at
+        description: >
+          Timestamp when the source record was loaded into Snowflake.

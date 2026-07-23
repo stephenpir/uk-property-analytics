@@ -1,0 +1,137 @@
+version: 2
+
+models:
+
+  - name: dim_property
+    description: >
+      Dimension containing the unique properties represented in the
+      HM Land Registry Price Paid Data.
+
+    columns:
+
+      - name: property_key
+        description: >
+          Surrogate key uniquely identifying a property.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: postcode
+        description: >
+          Postcode associated with the property.
+
+      - name: property_type
+        description: >
+          HM Land Registry property type code.
+
+      - name: property_type_description
+        description: >
+          Human-readable property type description.
+
+      - name: property_age_category
+        description: >
+          Indicates whether the property is newly built or established.
+
+      - name: tenure_description
+        description: >
+          Human-readable property tenure description.
+
+
+  - name: dim_date
+    description: >
+      Date dimension covering the period represented by the property
+      transaction data.
+
+    columns:
+
+      - name: date_day
+        description: >
+          Calendar date.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: year
+        description: >
+          Calendar year.
+
+      - name: quarter
+        description: >
+          Calendar quarter.
+
+      - name: month
+        description: >
+          Calendar month number.
+
+      - name: month_name
+        description: >
+          Calendar month name.
+
+
+  - name: fact_property_transactions
+    description: >
+      Fact table containing individual HM Land Registry property
+      transactions and their associated measures and dimensional keys.
+
+    columns:
+
+      - name: transaction_id
+        description: >
+          Unique identifier for the property transaction.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: property_key
+        description: >
+          Foreign key referencing the associated property in dim_property.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_property')
+                field: property_key
+
+      - name: date_of_transfer
+        description: >
+          Date on which the property transaction was completed.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_day
+
+      - name: price
+        description: >
+          Sale price of the property transaction.
+        data_tests:
+          - not_null
+
+      - name: transaction_year
+        description: >
+          Calendar year of the transaction.
+
+      - name: transaction_month
+        description: >
+          Calendar month number of the transaction.
+
+      - name: transaction_month_start
+        description: >
+          First day of the transaction month.
+
+      - name: ppd_category_type
+        description: >
+          HM Land Registry Price Paid Data category.
+
+      - name: record_status
+        description: >
+          Status of the source record.
+
+      - name: _source_file
+        description: >
+          S3 object path of the source file.
+
+      - name: _loaded_at
+        description: >
+          Timestamp when the source record was loaded into Snowflake.

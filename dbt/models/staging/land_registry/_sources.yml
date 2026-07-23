@@ -1,0 +1,98 @@
+version: 2
+
+sources:
+  - name: land_registry
+    description: >
+      HM Land Registry Price Paid Data containing residential property
+      transactions in England and Wales.
+
+    database: PROPERTY_ANALYTICS
+    schema: RAW
+
+    tables:
+      - name: land_registry_price_paid
+        description: >
+          Raw HM Land Registry Price Paid Data loaded from annual
+          and monthly source files into Snowflake.
+
+        columns:
+          - name: transaction_id
+            description: >
+              A unique reference number generated automatically for each
+              published sale.
+
+          - name: price
+            description: >
+              Sale price stated on the transfer deed.
+
+          - name: date_of_transfer
+            description: >
+              Date when the sale was completed, as stated on the transfer deed.
+
+          - name: postcode
+            description: >
+              Postcode used at the time of the original transaction.
+
+          - name: property_type
+            description: >
+              Property type: D = Detached, S = Semi-Detached,
+              T = Terraced, F = Flats/Maisonettes, O = Other.
+
+          - name: old_new
+            description: >
+              Indicates whether the property is newly built (Y)
+              or an established residential building (N).
+
+          - name: duration
+            description: >
+              Property tenure type, including F = Freehold
+              and L = Leasehold.
+
+          - name: paon
+            description: >
+              Primary Addressable Object Name, typically the house
+              number or name.
+
+          - name: saon
+            description: >
+              Secondary Addressable Object Name, identifying a separate
+              unit or flat where a property is divided into multiple units.
+
+          - name: street
+            description: >
+              Street name of the property address.
+
+          - name: locality
+            description: >
+              Locality associated with the property address.
+
+          - name: town_city
+            description: >
+              Town or city associated with the property address.
+
+          - name: district
+            description: >
+              Administrative district associated with the property address.
+
+          - name: county
+            description: >
+              County associated with the property address.
+
+          - name: ppd_category_type
+            description: >
+              Price Paid Data category: A = Standard Price Paid entry,
+              B = Additional Price Paid entry.
+
+          - name: record_status
+            description: >
+              Monthly file record status: A = Addition,
+              C = Change, D = Delete.
+
+          - name: _source_file
+            description: >
+              S3 object path of the source file from which the record
+              was loaded.
+
+          - name: _loaded_at
+            description: >
+              Timestamp when the record was loaded into Snowflake.

@@ -1,0 +1,117 @@
+version: 2
+
+models:
+  - name: stg_land_registry_price_paid
+    description: >
+      Cleaned and standardised staging model for HM Land Registry
+      Price Paid Data.
+
+    columns:
+
+      - name: transaction_id
+        description: >
+          Unique reference number generated for each published property
+          transaction.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: price
+        description: >
+          Sale price stated on the transfer deed, represented as a numeric
+          value in the staging layer.
+        data_tests:
+          - not_null
+
+      - name: date_of_transfer
+        description: >
+          Date when the sale was completed, represented as a DATE.
+        data_tests:
+          - not_null
+
+      - name: postcode
+        description: >
+          Postcode associated with the property at the time of the
+          transaction.
+
+      - name: property_type
+        description: >
+          Property type classification.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['D', 'S', 'T', 'F', 'O']
+
+      - name: old_new
+        description: >
+          Indicates whether the property was newly built or previously
+          occupied.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Y', 'N']
+
+      - name: duration
+        description: >
+          Property tenure type.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['F', 'L']
+
+      - name: paon
+        description: >
+          Primary Addressable Object Name, typically the property
+          number or name.
+
+      - name: saon
+        description: >
+          Secondary Addressable Object Name, used where a property
+          contains multiple separately addressed units.
+
+      - name: street
+        description: >
+          Street name associated with the property.
+
+      - name: locality
+        description: >
+          Locality associated with the property.
+
+      - name: town_city
+        description: >
+          Town or city associated with the property.
+
+      - name: district
+        description: >
+          Administrative district associated with the property.
+
+      - name: county
+        description: >
+          County associated with the property.
+
+      - name: ppd_category_type
+        description: >
+          Price Paid Data category indicating whether the transaction
+          is a standard or additional entry.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['A', 'B']
+
+      - name: record_status
+        description: >
+          Indicates whether the record represents an addition, change,
+          or deletion in the source data.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['A', 'C', 'D']
+
+      - name: _source_file
+        description: >
+          S3 object path identifying the source file from which the
+          record was loaded.
+
+      - name: _loaded_at
+        description: >
+          Timestamp when the record was loaded into Snowflake.
