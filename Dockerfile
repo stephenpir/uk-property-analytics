@@ -12,5 +12,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY python/ ./python/
 COPY dbt/ ./dbt/
+COPY sql/ ./sql/
+COPY tests/ ./tests/
+COPY docs/ ./docs/
 
 CMD ["python", "--version"]

@@ -6,11 +6,11 @@ from docker.types import Mount
 
 
 with DAG(
-    dag_id="uk_property_analytics_ingestion",
+    dag_id="uk_property_analytics_pipeline",
     start_date=datetime(2026, 1, 1),
     schedule=None,
     catchup=False,
-    tags=["uk-property-analytics", "ingestion"],
+    tags=["uk-property-analytics"],
 ) as dag:
 
     ingest_land_registry = DockerOperator(
@@ -39,3 +39,55 @@ with DAG(
             ),
         ],
     )
+
+    load_raw_data = DockerOperator(
+        task_id="load_raw_data",
+        image="uk-property-analytics:latest",
+        command=[
+            "python",
+            "python/utils/snowflake_execute_sql.py",
+            "--sql-file",
+            "/app/sql/05_load_raw_data.sql",
+            "--profile",
+            "uk_property_analytics",
+            "--target",
+            "dev",
+        ],
+        docker_url="unix://var/run/docker.sock",
+        network_mode="host",
+        auto_remove="success",
+        mount_tmp_dir=False,
+        mounts=[
+            Mount(
+                source="/Users/stephenpir/.dbt",
+                target="/root/.dbt",
+                type="bind",
+                read_only=True,
+            ),
+        ],
+    )
+
+    dbt_run = DockerOperator(
+        task_id="dbt_run",
+        image="uk-property-analytics:latest",
+        command=[
+            "dbt",
+            "run",
+            "--project-dir",
+            "/app/dbt",
+        ],
+        docker_url="unix://var/run/docker.sock",
+        network_mode="host",
+        auto_remove="success",
+        mount_tmp_dir=False,
+        mounts=[
+            Mount(
+                source="/Users/stephenpir/.dbt",
+                target="/root/.dbt",
+                type="bind",
+                read_only=True,
+            ),
+        ],
+    )
+
+ingest_land_registry >> load_raw_data >> dbt_run

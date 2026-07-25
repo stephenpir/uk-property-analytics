@@ -53,15 +53,15 @@ PATTERN = '.*annual/2025/pp-2025\.csv'
 ON_ERROR = 'ABORT_STATEMENT';
 
 
-SELECT COUNT(*) AS row_count
-FROM LAND_REGISTRY_PRICE_PAID; -- Check the number of rows loaded into the LAND_REGISTRY_PRICE_PAID table
+-- SELECT COUNT(*) AS row_count
+-- FROM LAND_REGISTRY_PRICE_PAID; -- Check the number of rows loaded into the LAND_REGISTRY_PRICE_PAID table
 
-SELECT *
-FROM LAND_REGISTRY_PRICE_PAID
-LIMIT 10; -- Check the first 10 rows of the LAND_REGISTRY_PRICE_PAID table to verify the data has been loaded correctly
+-- SELECT *
+-- FROM LAND_REGISTRY_PRICE_PAID
+-- LIMIT 10; -- Check the first 10 rows of the LAND_REGISTRY_PRICE_PAID table to verify the data has been loaded correctly
 
-SELECT
-    _source_file,
-    COUNT(*) AS row_count
-FROM LAND_REGISTRY_PRICE_PAID
-GROUP BY _source_file; -- Verify the source file metadata has been captured correctly for each record loaded into the LAND_REGISTRY_PRICE_PAID table
+-- SELECT
+--     _source_file,
+--     COUNT(*) AS row_count
+-- FROM LAND_REGISTRY_PRICE_PAID
+-- GROUP BY _source_file; -- Verify the source file metadata has been captured correctly for each record loaded into the LAND_REGISTRY_PRICE_PAID table
