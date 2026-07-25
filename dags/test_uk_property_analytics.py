@@ -15,7 +15,7 @@ with DAG(
     test_project_container = DockerOperator(
         task_id="test_project_container",
         image="uk-property-analytics:latest",
-        command="python --version",
+        command="dbt --version",
         auto_remove="success",
         docker_url="unix://var/run/docker.sock",
         network_mode="bridge",
