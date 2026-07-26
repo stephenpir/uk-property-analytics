@@ -54,11 +54,16 @@ with DAG(
             "uk_property_analytics",
             "--target",
             "dev",
+            "--year",
+            "{{ params.year }}",
         ],
         docker_url="unix://var/run/docker.sock",
         network_mode="host",
         auto_remove="success",
         mount_tmp_dir=False,
+        # environment={
+        #     "YEAR": "{{ params.year }}",
+        # },        
         mounts=[
             Mount(
                 source="/Users/stephenpir/.dbt",

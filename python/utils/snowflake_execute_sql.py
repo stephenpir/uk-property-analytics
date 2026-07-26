@@ -25,6 +25,7 @@ def execute_sql_file(
     sql_file: str,
     profile_name: str,
     target_name: str,
+    year: int,
 ) -> None:
     target = load_dbt_target(profile_name, target_name)
 
@@ -47,6 +48,8 @@ def execute_sql_file(
         with connection.cursor() as cursor:
             sql = sql_path.read_text()
 
+            sql = sql.replace("{{ YEAR }}", str(year))
+
             for statement in sql.split(";"):
                 # Remove SQL comment lines
                 lines = [
@@ -63,6 +66,9 @@ def execute_sql_file(
                 print(f"Executing: {statement[:100]}...")
                 cursor.execute(statement)                    
 
+                if cursor.rowcount is not None and cursor.rowcount >= 0:
+                    print(f"Rows affected: {cursor.rowcount}")
+
     finally:
         connection.close()
 
@@ -75,6 +81,7 @@ if __name__ == "__main__":
     parser.add_argument("--sql-file", required=True)
     parser.add_argument("--profile", required=True)
     parser.add_argument("--target", required=True)
+    parser.add_argument("--year", required=True, type=int)
 
     args = parser.parse_args()
 
@@ -82,4 +89,5 @@ if __name__ == "__main__":
         sql_file=args.sql_file,
         profile_name=args.profile,
         target_name=args.target,
+        year=args.year,
     )
