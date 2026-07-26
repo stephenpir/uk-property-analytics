@@ -10,6 +10,9 @@ with DAG(
     start_date=datetime(2026, 1, 1),
     schedule=None,
     catchup=False,
+    params={
+        "year": 2025,
+    },
     tags=["uk-property-analytics"],
 ) as dag:
 
@@ -27,8 +30,7 @@ with DAG(
         environment={
             "AWS_REGION": "eu-west-2",
             "S3_BUCKET": "spir23-uk-residential-property-analytics-dev",
-            "CSV_URL": "https://price-paid-data.publicdata.landregistry.gov.uk/pp-2025.csv",
-            "S3_KEY": "landing/land-registry/annual/2025/pp-2025.csv",
+            "YEAR": "{{ params.year }}",
         },
         mounts=[
             Mount(

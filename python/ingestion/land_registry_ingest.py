@@ -87,20 +87,47 @@ def upload_to_s3(local_filename, bucket_name, s3_object_name, region):
         logger.error("Error accessing local file %s: %s", local_filename, e)
         return False
 
+def s3_object_exists(bucket_name, s3_object_name, region):
+    """Check whether an object already exists in S3."""
+    try:
+        s3 = boto3.client("s3", region_name=region)
+
+        s3.head_object(
+            Bucket=bucket_name,
+            Key=s3_object_name,
+        )
+
+        return True
+
+    except ClientError as e:
+        error_code = e.response.get("Error", {}).get("Code")
+
+        if error_code in ("404", "NoSuchKey", "NotFound"):
+            return False
+
+        raise
 
 def main():
     """Main ingestion process."""
 
-    csv_url = os.getenv("CSV_URL")
+    year = os.getenv("YEAR")
     s3_bucket = os.getenv("S3_BUCKET")
-    s3_key = os.getenv("S3_KEY")
     aws_region = os.getenv("AWS_REGION")
+
+    csv_url = (
+        f"https://price-paid-data.publicdata.landregistry.gov.uk/"
+        f"pp-{year}.csv"
+    )
+
+    s3_key = (
+        f"landing/land-registry/annual/{year}/"
+        f"pp-{year}.csv"
+    )
 
     # Validate required configuration
     required_config = {
-        "CSV_URL": csv_url,
+        "YEAR": year,
         "S3_BUCKET": s3_bucket,
-        "S3_KEY": s3_key,
         "AWS_REGION": aws_region,
     }
 
@@ -117,13 +144,35 @@ def main():
 
     logger.info("Starting Land Registry ingestion process")
 
+    # Check whether the file has already been ingested
+    try:
+        if s3_object_exists(
+            s3_bucket,
+            s3_key,
+            aws_region,
+        ):
+            logger.info(
+                "File already exists in s3://%s/%s. "
+                "Skipping ingestion.",
+                s3_bucket,
+                s3_key,
+            )
+            return 0
+
+    except (BotoCoreError, ClientError) as e:
+        logger.error(
+            "Unable to check whether S3 object exists: %s",
+            e,
+        )
+        return 1
+
     # Create a temporary file that is automatically removed
     # when the context manager exits.
     with tempfile.TemporaryDirectory() as temp_directory:
 
         local_file = os.path.join(
             temp_directory,
-            "pp-2025.csv",
+            f"pp-{year}.csv",
         )
 
         # Step 1: Download
