@@ -98,3 +98,113 @@ SELECT
     COUNT(*) AS total_rows,
     COUNT(DISTINCT TRANSACTION_ID) AS distinct_transaction_ids
 FROM PROPERTY_ANALYTICS.RAW.LAND_REGISTRY_PRICE_PAID;
+
+SELECT *
+FROM PROPERTY_ANALYTICS.RAW.LAND_REGISTRY_PRICE_PAID
+LIMIT 3;
+
+
+USE DATABASE PROPERTY_ANALYTICS;
+USE SCHEMA RAW;
+
+INSERT INTO LAND_REGISTRY_PRICE_PAID_CDC (
+    transaction_id,
+    price,
+    date_of_transfer,
+    postcode,
+    property_type,
+    old_new,
+    duration,
+    paon,
+    saon,
+    street,
+    locality,
+    town_city,
+    district,
+    county,
+    ppd_category_type,
+    record_status,
+    _source_file
+)
+VALUES
+(
+    '{50D10B84-0863-B8D0-E063-4704A8C08D98}',
+    '350000',
+    '2025-10-08 00:00',
+    'HR4 7PR',
+    'D',
+    'N',
+    'F',
+    'WONDERLAND COTTAGE',
+    '',
+    'BREINTON',
+    'HEREFORD',
+    'HEREFORDSHIRE',
+    'HEREFORDSHIRE',
+    'HEREFORDSHIRE',
+    'A',
+    'C',
+    'test/monthly-cdc-test.csv'
+),
+(
+    '{50D10B83-B1E3-B8D0-E063-4704A8C08D98}',
+    '335000',
+    '2025-07-02 00:00',
+    'N17 0LU',
+    'F',
+    'N',
+    'L',
+    '27B',
+    '',
+    'BARONET ROAD',
+    '',
+    'LONDON',
+    'HARINGEY',
+    'GREATER LONDON',
+    'A',
+    'D',
+    'test/monthly-cdc-test.csv'
+),
+(
+    '{TEST-CDC-ADD-001}',
+    '425000',
+    '2025-11-01 00:00',
+    'HA9 6DN',
+    'F',
+    'N',
+    'L',
+    '999',
+    '',
+    'TEST ROAD',
+    '',
+    'WEMBLEY',
+    'BRENT',
+    'GREATER LONDON',
+    'A',
+    'A',
+    'test/monthly-cdc-test.csv'
+);
+
+
+SELECT
+    transaction_id,
+    price,
+    record_status,
+    _source_file
+FROM LAND_REGISTRY_PRICE_PAID_CDC
+WHERE _source_file = 'test/monthly-cdc-test.csv';
+
+SELECT
+    transaction_id,
+    price,
+    record_status,
+    _source_file
+FROM LAND_REGISTRY_PRICE_PAID
+WHERE transaction_id IN (
+    '{50D10B84-0863-B8D0-E063-4704A8C08D98}',
+    '{50D10B83-B1E3-B8D0-E063-4704A8C08D98}',
+    '{TEST-CDC-ADD-001}'
+);
+
+DELETE FROM PROPERTY_ANALYTICS.RAW.LAND_REGISTRY_PRICE_PAID_CDC
+WHERE _source_file = 'test/monthly-cdc-test.csv';
