@@ -40,93 +40,13 @@ def create_audit_record(
     file_name: str,
     file_type: str,
     source_url: str,
-    source_year: int,
+    source_year: int | None,
     source_month: int | None,
     file_checksum: str,
     file_size_bytes: int,
     s3_bucket: str,
     s3_key: str,
 ) -> int:
-
-def mark_audit_success(
-    profile_name: str,
-    target_name: str,
-    audit_id: int,
-    source_row_count: int,
-    rows_inserted: int,
-    rows_updated: int,
-    rows_deleted: int,
-) -> None:
-
-    connection = create_snowflake_connection(
-        profile_name=profile_name,
-        target_name=target_name,
-    )
-
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                """
-                UPDATE PROPERTY_ANALYTICS.RAW.LAND_REGISTRY_FILE_INGESTION_AUDIT
-                SET
-                    PROCESSING_STATE = 'SUCCESS',
-                    PROCESSING_COMPLETED_AT = CURRENT_TIMESTAMP(),
-                    SOURCE_ROW_COUNT = %s,
-                    ROWS_INSERTED = %s,
-                    ROWS_UPDATED = %s,
-                    ROWS_DELETED = %s,
-                    ERROR_MESSAGE = NULL
-                WHERE FILE_INGESTION_ID = %s
-                """,
-                (
-                    source_row_count,
-                    rows_inserted,
-                    rows_updated,
-                    rows_deleted,
-                    audit_id,
-                ),
-            )
-
-            connection.commit()
-
-    finally:
-        connection.close()
-
-
-def mark_audit_failed(
-    profile_name: str,
-    target_name: str,
-    audit_id: int,
-    error_message: str,
-) -> None:
-
-    connection = create_snowflake_connection(
-        profile_name=profile_name,
-        target_name=target_name,
-    )
-
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                """
-                UPDATE PROPERTY_ANALYTICS.RAW.LAND_REGISTRY_FILE_INGESTION_AUDIT
-                SET
-                    PROCESSING_STATE = 'FAILED',
-                    PROCESSING_COMPLETED_AT = CURRENT_TIMESTAMP(),
-                    ERROR_MESSAGE = %s
-                WHERE FILE_INGESTION_ID = %s
-                """,
-                (
-                    error_message[:5000],
-                    audit_id,
-                ),
-            )
-
-            connection.commit()
-
-    finally:
-        connection.close()
-
     connection = create_snowflake_connection(
         profile_name=profile_name,
         target_name=target_name,
@@ -183,6 +103,84 @@ def mark_audit_failed(
             connection.commit()
 
             return audit_id
+
+    finally:
+        connection.close()
+
+
+def mark_audit_success(
+    profile_name: str,
+    target_name: str,
+    audit_id: int,
+    source_row_count: int,
+    rows_inserted: int,
+    rows_updated: int,
+    rows_deleted: int,
+) -> None:
+    connection = create_snowflake_connection(
+        profile_name=profile_name,
+        target_name=target_name,
+    )
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE PROPERTY_ANALYTICS.RAW.LAND_REGISTRY_FILE_INGESTION_AUDIT
+                SET
+                    PROCESSING_STATE = 'SUCCESS',
+                    PROCESSING_COMPLETED_AT = CURRENT_TIMESTAMP(),
+                    SOURCE_ROW_COUNT = %s,
+                    ROWS_INSERTED = %s,
+                    ROWS_UPDATED = %s,
+                    ROWS_DELETED = %s,
+                    ERROR_MESSAGE = NULL
+                WHERE FILE_INGESTION_ID = %s
+                """,
+                (
+                    source_row_count,
+                    rows_inserted,
+                    rows_updated,
+                    rows_deleted,
+                    audit_id,
+                ),
+            )
+
+            connection.commit()
+
+    finally:
+        connection.close()
+
+
+def mark_audit_failed(
+    profile_name: str,
+    target_name: str,
+    audit_id: int,
+    error_message: str,
+) -> None:
+    connection = create_snowflake_connection(
+        profile_name=profile_name,
+        target_name=target_name,
+    )
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE PROPERTY_ANALYTICS.RAW.LAND_REGISTRY_FILE_INGESTION_AUDIT
+                SET
+                    PROCESSING_STATE = 'FAILED',
+                    PROCESSING_COMPLETED_AT = CURRENT_TIMESTAMP(),
+                    ERROR_MESSAGE = %s
+                WHERE FILE_INGESTION_ID = %s
+                """,
+                (
+                    error_message[:5000],
+                    audit_id,
+                ),
+            )
+
+            connection.commit()
 
     finally:
         connection.close()
