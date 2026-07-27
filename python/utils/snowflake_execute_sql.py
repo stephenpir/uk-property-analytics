@@ -7,7 +7,7 @@ def execute_sql_file(
     sql_file: str,
     profile_name: str,
     target_name: str,
-    year: int,
+    parameters: list[str] | None = None,
 ) -> None:
     sql_path = Path(sql_file)
 
@@ -21,9 +21,11 @@ def execute_sql_file(
 
     try:
         with connection.cursor() as cursor:
-            sql = sql_path.read_text()
 
-            sql = sql.replace("{{ YEAR }}", str(year))
+            sql = sql_path.read_text()
+            for parameter in parameters or []:
+                name, value = parameter.split("=", 1)
+                sql = sql.replace(f"{{{{ {name} }}}}", value)
 
             for statement in sql.split(";"):
                 lines = [
@@ -55,13 +57,16 @@ if __name__ == "__main__":
     parser.add_argument("--sql-file", required=True)
     parser.add_argument("--profile", required=True)
     parser.add_argument("--target", required=True)
-    parser.add_argument("--year", required=True, type=int)
-
+    parser.add_argument(
+        "--param",
+        action="append",
+        default=[],
+    )
     args = parser.parse_args()
 
     execute_sql_file(
         sql_file=args.sql_file,
         profile_name=args.profile,
         target_name=args.target,
-        year=args.year,
+        parameters=args.param,
     )
