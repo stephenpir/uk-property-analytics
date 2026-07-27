@@ -1,24 +1,6 @@
 from pathlib import Path
 
-import snowflake.connector
-import yaml
-
-
-def load_dbt_target(profile_name: str, target_name: str) -> dict:
-    profiles_path = Path.home() / ".dbt" / "profiles.yml"
-
-    with profiles_path.open() as file:
-        profiles = yaml.safe_load(file)
-
-    try:
-        profile = profiles[profile_name]
-        target = profile["outputs"][target_name]
-    except KeyError as exc:
-        raise ValueError(
-            f"dbt profile/target not found: {profile_name}/{target_name}"
-        ) from exc
-
-    return target
+from python.utils.snowflake_connection import create_snowflake_connection
 
 
 def execute_sql_file(
@@ -27,21 +9,14 @@ def execute_sql_file(
     target_name: str,
     year: int,
 ) -> None:
-    target = load_dbt_target(profile_name, target_name)
-
     sql_path = Path(sql_file)
 
     if not sql_path.exists():
         raise FileNotFoundError(f"SQL file not found: {sql_path}")
 
-    connection = snowflake.connector.connect(
-        account=target["account"],
-        user=target["user"],
-        password=target["password"],
-        warehouse=target["warehouse"],
-        database=target["database"],
-        schema=target["schema"],
-        role=target["role"],
+    connection = create_snowflake_connection(
+        profile_name=profile_name,
+        target_name=target_name,
     )
 
     try:
@@ -51,7 +26,6 @@ def execute_sql_file(
             sql = sql.replace("{{ YEAR }}", str(year))
 
             for statement in sql.split(";"):
-                # Remove SQL comment lines
                 lines = [
                     line
                     for line in statement.splitlines()
@@ -64,7 +38,7 @@ def execute_sql_file(
                     continue
 
                 print(f"Executing: {statement[:100]}...")
-                cursor.execute(statement)                    
+                cursor.execute(statement)
 
                 if cursor.rowcount is not None and cursor.rowcount >= 0:
                     print(f"Rows affected: {cursor.rowcount}")

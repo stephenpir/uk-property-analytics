@@ -21,7 +21,8 @@ with DAG(
         image="uk-property-analytics:latest",
         command=[
             "python",
-            "python/ingestion/land_registry_ingest.py",
+            "-m",
+            "python.ingestion.land_registry_ingest",
         ],
         docker_url="unix://var/run/docker.sock",
         network_mode="host",
@@ -47,7 +48,8 @@ with DAG(
         image="uk-property-analytics:latest",
         command=[
             "python",
-            "python/utils/snowflake_execute_sql.py",
+            "-m",
+            "python.utils.snowflake_execute_sql",
             "--sql-file",
             "/app/sql/05_load_raw_data.sql",
             "--profile",
