@@ -1,10 +1,15 @@
 USE DATABASE PROPERTY_ANALYTICS;
 USE SCHEMA CONTROL;
 
+CREATE OR REPLACE SEQUENCE CONTROL.FILE_INGEST_AUDIT_SEQ
+    START = 1
+    INCREMENT = 1
+    ORDER;
+
 CREATE TABLE IF NOT EXISTS CONTROL.FILE_INGEST_AUDIT
 (
-    AUDIT_ID NUMBER AUTOINCREMENT
-        COMMENT 'Surrogate key uniquely identifying a file ingestion event',
+    AUDIT_ID NUMBER DEFAULT FILE_INGEST_AUDIT_SEQ.NEXTVAL
+        COMMENT 'Unique identifier for a file ingestion event used to correlate processing steps',
 
     SOURCE_NAME VARCHAR(100)
         COMMENT 'Source system identifier, for example LAND_REGISTRY',

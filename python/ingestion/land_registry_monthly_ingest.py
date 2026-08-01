@@ -10,6 +10,9 @@ from botocore.exceptions import BotoCoreError, ClientError, NoCredentialsError
 from dotenv import load_dotenv
 from datetime import datetime
 
+from python.utils.snowflake_connection import create_snowflake_connection
+from python.utils.file_ingest_audit import create_audit_record, update_audit_status
+
 # Load environment variables from .env
 load_dotenv()
 
@@ -175,6 +178,13 @@ def main():
 
     logger.info("Starting Land Registry ingestion process")
 
+    conn = create_snowflake_connection(
+        profile_name="uk_property_analytics",
+        target_name="dev",
+    )
+
+    cursor = conn.cursor()
+
     # Create a temporary file that is automatically removed
     # when the context manager exits.
     with tempfile.TemporaryDirectory() as temp_directory:
@@ -214,6 +224,8 @@ def main():
             "pp-monthly-update-new-version",
             checksum,
         )
+        
+        archive_filename = os.path.basename(archive_key)
 
         if not upload_to_s3(
             local_file,
@@ -237,7 +249,38 @@ def main():
         ):
             logger.error("Current upload failed. Ingestion process aborted.")
             return 1
-        
+
+        # Step 4: Create ingestion audit record
+
+        try:
+            audit_id = create_audit_record(
+                cursor,
+                source_name="LAND_REGISTRY",
+                file_name=archive_filename,
+                file_type="MONTHLY",
+                checksum=checksum,
+                s3_path=archive_key,
+            )
+
+            conn.commit()
+
+        except Exception as e:
+            conn.rollback()
+
+            logger.error(
+                "Failed creating audit record: %s",
+                e,
+            )
+
+            return 1
+
+        logger.info(
+            "Created LAND_REGISTRY audit record %s",
+            audit_id,
+        )
+
+    cursor.close()
+    conn.close()        
     logger.info("Land Registry ingestion completed successfully")
 
     return 0

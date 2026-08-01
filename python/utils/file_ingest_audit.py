@@ -18,9 +18,18 @@ def create_audit_record(
         AUDIT_ID
     """
 
+    cursor.execute(
+        """
+        SELECT CONTROL.FILE_INGEST_AUDIT_SEQ.NEXTVAL
+        """
+    )
+
+    audit_id = cursor.fetchone()[0]
+
     sql = """
         INSERT INTO CONTROL.FILE_INGEST_AUDIT
         (
+            AUDIT_ID,
             SOURCE_NAME,
             FILE_NAME,
             FILE_TYPE,
@@ -36,6 +45,7 @@ def create_audit_record(
             %s,
             %s,
             %s,
+            %s,
             'LANDED',
             CURRENT_TIMESTAMP()
         )
@@ -44,6 +54,7 @@ def create_audit_record(
     cursor.execute(
         sql,
         (
+            audit_id,
             source_name,
             file_name,
             file_type,
@@ -51,17 +62,6 @@ def create_audit_record(
             s3_path,
         ),
     )
-
-    cursor.execute(
-        """
-        SELECT MAX(AUDIT_ID)
-        FROM CONTROL.FILE_INGEST_AUDIT
-        WHERE FILE_CHECKSUM = %s
-        """,
-        (checksum,),
-    )
-
-    audit_id = cursor.fetchone()[0]
 
     logger.info(
         "Created audit record %s for file %s",
