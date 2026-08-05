@@ -13,6 +13,8 @@ from datetime import datetime
 from python.utils.snowflake_connection import create_snowflake_connection
 from python.utils.file_ingest_audit import create_audit_record, update_audit_status
 
+import json
+
 # Load environment variables from .env
 load_dotenv()
 
@@ -283,8 +285,9 @@ def main():
     conn.close()        
     logger.info("Land Registry ingestion completed successfully")
 
-    return 0
-
+    return {"archive_file_name": archive_filename} # The use of a dictionary allows for future extensibility if more return values are needed but is currently redundant since only the archive filename is being returned and explicitly converted to a string in the print statement.
 
 if __name__ == "__main__":
-    sys.exit(main())
+    result = main()
+    print(f"{result['archive_file_name']}")  # Add this line
+

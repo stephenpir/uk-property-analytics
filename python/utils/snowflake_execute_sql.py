@@ -27,6 +27,9 @@ def execute_sql_file(
                 name, value = parameter.split("=", 1)
                 sql = sql.replace(f"{{{{ {name} }}}}", value)
 
+            ### ADD THIS EXACT LINE HERE ###
+            print(f"\n=== FULL SQL ===\n{sql}\n================")  # Single debug line
+            
             for statement in sql.split(";"):
                 lines = [
                     line
