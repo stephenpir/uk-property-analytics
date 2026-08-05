@@ -3,6 +3,7 @@ import os
 import sys
 import tempfile
 import hashlib
+import pickle
 
 import boto3
 import requests
@@ -13,7 +14,7 @@ from datetime import datetime
 from python.utils.snowflake_connection import create_snowflake_connection
 from python.utils.file_ingest_audit import create_audit_record, update_audit_status
 
-import json
+import json # Not used in the end but perhaps in the future if we want to return more than just the archive filename.
 
 # Load environment variables from .env
 load_dotenv()
@@ -218,7 +219,7 @@ def main():
             logger.info(
                 "File checksum matches current S3 file. Skipping ingestion."
             )
-            return 0
+            return None
 
         # Step 2: Upload archive copy
 
@@ -285,9 +286,13 @@ def main():
     conn.close()        
     logger.info("Land Registry ingestion completed successfully")
 
-    return {"archive_file_name": archive_filename} # The use of a dictionary allows for future extensibility if more return values are needed but is currently redundant since only the archive filename is being returned and explicitly converted to a string in the print statement.
+    return {"archive_file_name": archive_filename, "audit_id": audit_id} # The use of a dictionary allows for future extensibility if more return values are needed but is currently redundant since only the archive filename is being returned and explicitly converted to a string in the print statement.
 
 if __name__ == "__main__":
     result = main()
-    print(f"{result['archive_file_name']}")  # Add this line
+    # print(f"{result['archive_file_name']}")  # Add this line
+    # print(json.dumps(result))
 
+    with open("/tmp/return.pkl", "wb") as f:
+        # json.dump(result, f)
+        pickle.dump(result, f)

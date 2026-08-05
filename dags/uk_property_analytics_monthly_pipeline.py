@@ -4,6 +4,16 @@ from airflow import DAG
 from airflow.providers.docker.operators.docker import DockerOperator
 from docker.types import Mount
 
+from airflow.operators.python import ShortCircuitOperator
+
+def check_new_file(**context):
+    result = context["ti"].xcom_pull(
+        task_ids="ingest_land_registry_monthly",
+        key="return_value",
+    )
+
+    return result is not None and "archive_file_name" in result
+
 
 with DAG(
     dag_id="uk_property_analytics_monthly_pipeline",
@@ -29,6 +39,8 @@ with DAG(
         auto_remove="success",
         mount_tmp_dir=False,
         do_xcom_push=True,
+        retrieve_output=True,
+        retrieve_output_path="/tmp/return.pkl",
         environment={
             "AWS_REGION": "eu-west-2",
             "S3_BUCKET": "spir23-uk-residential-property-analytics-dev",
@@ -49,6 +61,10 @@ with DAG(
         ],
     )
 
+    check_new_file = ShortCircuitOperator(
+        task_id="check_new_file",
+        python_callable=check_new_file,
+    )
 
     load_monthly_raw_data = DockerOperator(
         task_id="load_monthly_raw_data",
@@ -66,7 +82,10 @@ with DAG(
             "--param",
             "YEAR={{ params.year }}",
             "--param",
-            "ARCHIVE_FILE_NAME={{ ti.xcom_pull(task_ids='ingest_land_registry_monthly', key='return_value') }}",
+            # "ARCHIVE_FILE_NAME={{ ti.xcom_pull(task_ids='ingest_land_registry_monthly', key='return_value') }}","--param",
+            "ARCHIVE_FILE_NAME={{ ti.xcom_pull(task_ids='ingest_land_registry_monthly', key='return_value')['archive_file_name'] }}",
+            "--param",
+            "AUDIT_ID={{ ti.xcom_pull(task_ids='ingest_land_registry_monthly', key='return_value')['audit_id'] }}",
 
         ],
         docker_url="unix://var/run/docker.sock",
@@ -108,5 +127,4 @@ with DAG(
     )
 
 
-    ingest_land_registry_monthly >> load_monthly_raw_data >> dbt_run
-    # ingest_land_registry_monthly 
+    ingest_land_registry_monthly >> check_new_file >> load_monthly_raw_data >> dbt_run
