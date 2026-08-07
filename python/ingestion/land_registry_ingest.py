@@ -8,6 +8,11 @@ import requests
 from botocore.exceptions import BotoCoreError, ClientError, NoCredentialsError
 from dotenv import load_dotenv
 
+import hashlib
+from python.utils.snowflake_connection import create_snowflake_connection
+from python.utils.file_ingest_audit import create_audit_record
+
+import pickle
 
 # Load environment variables from .env
 load_dotenv()
@@ -46,6 +51,15 @@ def download_csv(url, local_filename):
         logger.error("Error writing downloaded file %s: %s", local_filename, e)
         return False
 
+def calculate_checksum(filename):
+    """Calculate SHA-256 checksum for a file."""
+    sha256 = hashlib.sha256()
+
+    with open(filename, "rb") as file:
+        for chunk in iter(lambda: file.read(8192), b""):
+            sha256.update(chunk)
+
+    return sha256.hexdigest()
 
 def upload_to_s3(local_filename, bucket_name, s3_object_name, region):
     """Upload a file to an S3 bucket."""
@@ -144,7 +158,9 @@ def main():
 
     logger.info("Starting Land Registry ingestion process")
 
+    
     # Check whether the file has already been ingested
+    audit_id = None
     try:
         if s3_object_exists(
             s3_bucket,
@@ -157,7 +173,7 @@ def main():
                 s3_bucket,
                 s3_key,
             )
-            return 0
+            return None
 
     except (BotoCoreError, ClientError) as e:
         logger.error(
@@ -180,6 +196,13 @@ def main():
             logger.error("Download failed. Ingestion process aborted.")
             return 1
 
+        checksum = calculate_checksum(local_file)
+
+        logger.info(
+            "Calculated SHA-256 checksum: %s",
+            checksum,
+        )
+
         # Step 2: Upload to S3
         if not upload_to_s3(
             local_file,
@@ -189,11 +212,48 @@ def main():
         ):
             logger.error("S3 upload failed. Ingestion process aborted.")
             return 1
+        
+        # Step 3: Create ingestion audit record
+        conn = create_snowflake_connection(
+            profile_name="uk_property_analytics",
+            target_name="dev",
+        )
+
+        cursor = conn.cursor()
+
+        try:
+            audit_id = create_audit_record(
+                cursor,
+                source_name="LAND_REGISTRY",
+                file_name=f"pp-{year}.csv",
+                file_type="ANNUAL",
+                checksum=checksum,
+                s3_path=s3_key,
+            )
+
+            conn.commit()
+
+        except Exception as e:
+            conn.rollback()
+            logger.error("Failed creating audit record: %s", e)
+            return 1
+
+        finally:
+            cursor.close()
+            conn.close()
 
     logger.info("Land Registry ingestion completed successfully")
 
-    return 0
+    return {"audit_id": audit_id}
+
+    # logger.info("Land Registry ingestion completed successfully")
+
+    # return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    # sys.exit(main())
+    result = main()
+
+    with open("/tmp/return.pkl", "wb") as f:
+        pickle.dump(result, f)
